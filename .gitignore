@@ -1,0 +1,17 @@
+# Python bytecode
+__pycache__/
+*.pyc
+
+# Local weights and datasets (if stored inside workspace)
+*.pt
+*.pth
+*.safetensors
+data/
+weights/
+
+# Modal and tool artifacts
+.modal/
+.claude/
+
+# Ignore nested .git folders so your main repo tracks everything as flat files
+third_party/**/.git
