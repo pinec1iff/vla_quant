@@ -77,3 +77,13 @@ Each summary JSON includes:
 - The default GPU is `L40S`, which has 48 GB VRAM and is a good first target for inference. If you want stricter apples-to-apples memory measurements, change the `gpu=` argument in `scripts/modal_libero_baselines.py` and rerun both models on the same GPU type.
 - The first run will be slow because Modal builds images and downloads checkpoints. Later runs reuse the `vla-quant-model-cache` volume.
 - pi0.5 uses OpenPI's native two-process LIBERO evaluation path. GR00T uses NVIDIA's native GR00T server plus `rollout_policy.py` over every task in the requested suite.
+
+
+# Modal List
+modal volume ls vla-quant-libero-results /libero_baselines
+modal volume ls vla-quant-libero-results /libero_baselines/pi05_libero_spatial_1779652538
+
+# Modal Download
+modal volume get vla-quant-libero-results /libero_baselines/pi05_libero_spatial_1779652538 ./pi05_libero_spatial_1779652538
+modal volume get vla-quant-libero-results /libero_baselines/pi05_libero_spatial_1779652538.json ./pi05_libero_spatial_1779652538.json
+

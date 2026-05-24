@@ -15,3 +15,6 @@ weights/
 
 # Ignore nested .git folders so your main repo tracks everything as flat files
 third_party/**/.git
+
+#ENV
+.env

@@ -150,6 +150,9 @@ GROOT_IMAGE = (
         "sed -i \"s/required-environments/environments/\" pyproject.toml",
         "sed -i \"/platform_machine == 'aarch64'/d\" pyproject.toml",
         "sed -i '/^torchcodec = \\[/,/^\\]/d' pyproject.toml",
+        "sed -i '/^\\[tool\\.uv\\.extra-build-dependencies\\]/,/^\\[/ { /^\\[tool\\.uv\\.extra-build-dependencies\\]/d; /^\\[/!d; }' pyproject.toml",
+        "sed -i '/git submodule update --init/d' gr00t/eval/sim/LIBERO/setup_libero.sh",
+        "sed -i 's/uv pip install --requirements /uv pip install --requirement /g' gr00t/eval/sim/LIBERO/setup_libero.sh",
         "uv sync --python 3.10",
     )
 )
@@ -379,6 +382,20 @@ def _max_memory_mb(samples: list[dict[str, Any]]) -> int | None:
     return max(values) if values else None
 
 
+def _missing_gr00t_checkpoint_files(model_path: Path) -> list[str]:
+    required = [
+        "config.json",
+        "embodiment_id.json",
+        "model.safetensors.index.json",
+        "processor_config.json",
+        "statistics.json",
+    ]
+    missing = [name for name in required if not (model_path / name).exists()]
+    if not list(model_path.glob("model-*.safetensors")):
+        missing.append("model-*.safetensors")
+    return missing
+
+
 @app.function(
     image=OPENPI_IMAGE,
     gpu="A100-40GB",
@@ -472,12 +489,14 @@ def run_pi05(
         },
     )
 
-
+#pass in huggingface secret
+#set via command line: modal secret create huggingface-secret HF_TOKEN=hf_your_token_here
 @app.function(
     image=GROOT_IMAGE,
     gpu="A100-40GB",
     timeout=24 * HOURS,
     startup_timeout=2 * HOURS,
+    secrets=[modal.Secret.from_name("huggingface-secret")],
     volumes={"/results": RESULTS_VOLUME, "/cache": CACHE_VOLUME},
 )
 def run_gr00t(
@@ -501,19 +520,43 @@ def run_gr00t(
     monitor.start()
 
     model_path = Path(checkpoint_root) / suite
-    if not model_path.exists():
-        include = [
+    missing = _missing_gr00t_checkpoint_files(model_path)
+    if missing:
+        print(f"Downloading GR00T checkpoint files for {suite}; missing: {missing}", flush=True)
+        filenames = [
             f"{suite}/config.json",
             f"{suite}/embodiment_id.json",
-            f"{suite}/model-*.safetensors",
+            f"{suite}/model-00001-of-00002.safetensors",
+            f"{suite}/model-00002-of-00002.safetensors",
             f"{suite}/model.safetensors.index.json",
             f"{suite}/processor_config.json",
             f"{suite}/statistics.json",
         ]
-        cmd = ["uv", "run", "hf", "download", "nvidia/GR00T-N1.7-LIBERO", "--local-dir", checkpoint_root]
-        for pattern in include:
-            cmd.extend(["--include", pattern])
+        cmd = [
+            "uv",
+            "run",
+            "hf",
+            "download",
+            "nvidia/GR00T-N1.7-LIBERO",
+            *filenames,
+            "--local-dir",
+            checkpoint_root,
+        ]
         _run_streaming(cmd, cwd=GROOT_DIR, env=COMMON_ENV, log_path=run_dir / "download.log")
+        CACHE_VOLUME.commit()
+        missing = _missing_gr00t_checkpoint_files(model_path)
+        if missing:
+            listing = _run_streaming(
+                ["find", str(model_path), "-maxdepth", "2", "-type", "f"],
+                cwd=GROOT_DIR,
+                env=COMMON_ENV,
+                log_path=run_dir / "checkpoint_listing.log",
+                check=False,
+            )
+            raise FileNotFoundError(
+                f"GR00T checkpoint at {model_path} is still missing {missing} after download.\n"
+                f"Files found:\n{listing}"
+            )
 
     setup_marker = GROOT_DIR / "gr00t/eval/sim/LIBERO/libero_uv/.setup_complete"
     if not setup_marker.exists():
