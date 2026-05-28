@@ -1,0 +1,668 @@
+{
+  "checkpoint": "gs://openpi-assets/checkpoints/pi05_libero",
+  "gpu_samples": [
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:23.470",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:25.508",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:27.551",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:29.586",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:31.625",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 0,
+      "timestamp": "2026/05/25 03:31:33.668",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 431,
+      "timestamp": "2026/05/25 03:31:35.709",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 431,
+      "timestamp": "2026/05/25 03:31:37.751",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 431,
+      "timestamp": "2026/05/25 03:31:39.790",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 431,
+      "timestamp": "2026/05/25 03:31:41.832",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30763,
+      "timestamp": "2026/05/25 03:31:43.870",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30763,
+      "timestamp": "2026/05/25 03:31:46.002",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30765,
+      "timestamp": "2026/05/25 03:31:48.059",
+      "utilization_gpu_percent": 7
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30771,
+      "timestamp": "2026/05/25 03:31:50.097",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30771,
+      "timestamp": "2026/05/25 03:31:52.132",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30771,
+      "timestamp": "2026/05/25 03:31:54.166",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30771,
+      "timestamp": "2026/05/25 03:31:56.209",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30877,
+      "timestamp": "2026/05/25 03:31:58.248",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30772,
+      "timestamp": "2026/05/25 03:32:00.290",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:02.324",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:04.362",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:06.398",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:08.434",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:10.481",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:12.902",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:14.951",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:16.993",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31323,
+      "timestamp": "2026/05/25 03:32:19.038",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31347,
+      "timestamp": "2026/05/25 03:32:21.075",
+      "utilization_gpu_percent": 62
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31347,
+      "timestamp": "2026/05/25 03:32:23.112",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31347,
+      "timestamp": "2026/05/25 03:32:25.145",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31347,
+      "timestamp": "2026/05/25 03:32:27.182",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31347,
+      "timestamp": "2026/05/25 03:32:29.219",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:31.260",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:33.304",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:35.344",
+      "utilization_gpu_percent": 29
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:37.423",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:32:39.469",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:41.517",
+      "utilization_gpu_percent": 15
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:43.562",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:45.602",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:32:47.653",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31313,
+      "timestamp": "2026/05/25 03:32:49.740",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:51.805",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:53.848",
+      "utilization_gpu_percent": 21
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:32:55.887",
+      "utilization_gpu_percent": 5
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:32:58.000",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31325,
+      "timestamp": "2026/05/25 03:33:00.112",
+      "utilization_gpu_percent": 13
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31227,
+      "timestamp": "2026/05/25 03:33:02.189",
+      "utilization_gpu_percent": 10
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:04.256",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:06.359",
+      "utilization_gpu_percent": 30
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:08.529",
+      "utilization_gpu_percent": 21
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:33:10.656",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:33:12.852",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:14.917",
+      "utilization_gpu_percent": 36
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:16.952",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:18.984",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:21.023",
+      "utilization_gpu_percent": 38
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:33:23.067",
+      "utilization_gpu_percent": 27
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:25.119",
+      "utilization_gpu_percent": 42
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:27.155",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:29.191",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31325,
+      "timestamp": "2026/05/25 03:33:31.227",
+      "utilization_gpu_percent": 19
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:33.265",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:35.300",
+      "utilization_gpu_percent": 13
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:37.338",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:33:39.373",
+      "utilization_gpu_percent": 9
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30807,
+      "timestamp": "2026/05/25 03:33:41.576",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:43.738",
+      "utilization_gpu_percent": 13
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:45.827",
+      "utilization_gpu_percent": 26
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:47.865",
+      "utilization_gpu_percent": 34
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:33:49.899",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:51.960",
+      "utilization_gpu_percent": 23
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:53.999",
+      "utilization_gpu_percent": 9
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:56.036",
+      "utilization_gpu_percent": 36
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:33:58.078",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31313,
+      "timestamp": "2026/05/25 03:34:00.121",
+      "utilization_gpu_percent": 0
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:34:02.156",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:34:04.188",
+      "utilization_gpu_percent": 10
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 31349,
+      "timestamp": "2026/05/25 03:34:06.224",
+      "utilization_gpu_percent": 40
+    },
+    {
+      "gpu_index": 0,
+      "gpu_name": "NVIDIA A100-SXM4-40GB",
+      "memory_total_mb": 40960,
+      "memory_used_mb": 30798,
+      "timestamp": "2026/05/25 03:34:08.291",
+      "utilization_gpu_percent": 0
+    }
+  ],
+  "logs": {
+    "client": "/results/libero_baselines/pi05_libero_spatial_1779679883/client.log",
+    "server": "/results/libero_baselines/pi05_libero_spatial_1779679883/server.log"
+  },
+  "max_gpu_memory_mb": 31349,
+  "metrics": {
+    "episodes": 10,
+    "success_rate": 1.0
+  },
+  "model": "pi0.5",
+  "quant_drift_npz": "/results/libero_baselines/pi05_libero_spatial_1779679883/kv_drift.npz",
+  "run_name": "pi05_libero_spatial_1779679883",
+  "seed": 7,
+  "suite": "libero_spatial",
+  "trials_per_task": 1
+}

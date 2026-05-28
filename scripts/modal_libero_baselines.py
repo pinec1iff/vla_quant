@@ -409,6 +409,9 @@ def run_pi05(
     seed: int = 7,
     replan_steps: int = 5,
     checkpoint: str = "gs://openpi-assets/checkpoints/pi05_libero",
+    dump_quant: bool = False,
+    live_quant_bits: int = 0,
+    live_quant_mode: str = "wht_lloydmax",
 ) -> dict[str, Any]:
     """Evaluate pi0.5-LIBERO through OpenPI's native LIBERO client/server."""
     if suite not in LIBERO_SUITES:
@@ -416,6 +419,21 @@ def run_pi05(
 
     run_name = f"pi05_{suite}_{int(time.time())}"
     run_dir = RESULTS_DIR / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    quant_env = (
+        {
+            "VLA_QUANT_DUMP_NPZ": str(run_dir / "kv_drift.npz"),
+            "VLA_QUANT_LAYERS": "0",
+            "VLA_QUANT_JAX_LAYER_STRIDE": "18",
+            "VLA_QUANT_JAX_LAYER_OFFSET": "0",
+            "VLA_QUANT_LIVE_BITS": str(live_quant_bits),
+            "VLA_QUANT_MODE": live_quant_mode,
+            "VLA_QUANT_MAX_STEPS": "12",
+            "VLA_QUANT_MAX_VALUES": "65536",
+        }
+        if dump_quant
+        else {}
+    )
     stop = threading.Event()
     gpu_samples: list[dict[str, Any]] = []
     monitor = threading.Thread(target=_sample_gpu, args=(stop, gpu_samples), daemon=True)
@@ -435,7 +453,7 @@ def run_pi05(
             checkpoint,
         ],
         cwd=OPENPI_DIR,
-        env=COMMON_ENV,
+        env=COMMON_ENV | quant_env,
         log_path=server_log,
     )
     try:
@@ -464,7 +482,8 @@ def run_pi05(
             | {
                 "PYTHONPATH": f"{OPENPI_DIR}:{OPENPI_DIR / 'packages/openpi-client/src'}:{OPENPI_DIR / 'third_party/libero'}",
                 "LIBERO_CONFIG_PATH": "/tmp/libero",
-            },
+            }
+            | quant_env,
             log_path=run_dir / "client.log",
         )
     finally:
@@ -477,13 +496,17 @@ def run_pi05(
     return _write_summary(
         run_name,
         {
+            "run_name": run_name,
             "model": "pi0.5",
             "checkpoint": checkpoint,
             "suite": suite,
             "trials_per_task": trials_per_task,
+            "live_quant_bits": live_quant_bits,
+            "live_quant_mode": live_quant_mode,
             "seed": seed,
             "metrics": metrics,
             "max_gpu_memory_mb": _max_memory_mb(gpu_samples),
+            "quant_drift_npz": str(run_dir / "kv_drift.npz") if dump_quant else None,
             "gpu_samples": gpu_samples,
             "logs": {"server": str(run_dir / "server.log"), "client": str(run_dir / "client.log")},
         },
@@ -493,7 +516,7 @@ def run_pi05(
 #set via command line: modal secret create huggingface-secret HF_TOKEN=hf_your_token_here
 @app.function(
     image=GROOT_IMAGE,
-    gpu="A100-40GB",
+    gpu="H100",
     timeout=24 * HOURS,
     startup_timeout=2 * HOURS,
     secrets=[modal.Secret.from_name("huggingface-secret")],
@@ -507,6 +530,10 @@ def run_gr00t(
     n_action_steps: int = 8,
     seed: int = 7,
     checkpoint_root: str = "/cache/gr00t/GR00T-N1.7-LIBERO",
+    dump_quant: bool = False,
+    live_quant_bits: int = 0,
+    live_quant_mode: str = "wht_lloydmax",
+    task_limit: int | None = None,
 ) -> dict[str, Any]:
     """Evaluate NVIDIA GR00T N1.7-LIBERO over the tasks in a LIBERO suite."""
     if suite not in GROOT_TASKS:
@@ -514,6 +541,19 @@ def run_gr00t(
 
     run_name = f"gr00t_n17_{suite}_{int(time.time())}"
     run_dir = RESULTS_DIR / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    quant_env = (
+        {
+            "VLA_QUANT_DUMP_NPZ": str(run_dir / "kv_drift.npz"),
+            "VLA_QUANT_LIVE_BITS": str(live_quant_bits),
+            "VLA_QUANT_MODE": live_quant_mode,
+            "VLA_QUANT_MAX_STEPS": "12",
+            "VLA_QUANT_MAX_VALUES": "65536",
+            "GR00T_POLICY_CLIENT_TIMEOUT_MS": "180000",
+        }
+        if dump_quant
+        else {}
+    )
     stop = threading.Event()
     gpu_samples: list[dict[str, Any]] = []
     monitor = threading.Thread(target=_sample_gpu, args=(stop, gpu_samples), daemon=True)
@@ -584,43 +624,56 @@ def run_gr00t(
             str(GROOT_PORT),
         ],
         cwd=GROOT_DIR,
-        env=COMMON_ENV,
+        env=COMMON_ENV | quant_env,
         log_path=server_log,
     )
 
     task_results: dict[str, dict[str, Any]] = {}
     try:
         _wait_for_port("127.0.0.1", GROOT_PORT, timeout_s=7200, proc=server, log_path=server_log)
-        for task in GROOT_TASKS[suite]:
+        tasks = GROOT_TASKS[suite][:task_limit] if task_limit else GROOT_TASKS[suite]
+        for task in tasks:
             task_slug = task.removeprefix("libero_sim/").replace("/", "_")
-            output = _run_streaming(
-                [
-                    "gr00t/eval/sim/LIBERO/libero_uv/.venv/bin/python",
-                    "gr00t/eval/rollout_policy.py",
-                    "--n-episodes",
-                    str(episodes_per_task),
-                    "--policy-client-host",
-                    "127.0.0.1",
-                    "--policy-client-port",
-                    str(GROOT_PORT),
-                    "--max-episode-steps",
-                    str(max_episode_steps),
-                    "--env-name",
-                    task,
-                    "--n-action-steps",
-                    str(n_action_steps),
-                    "--n-envs",
-                    str(n_envs),
-                    "--seed",
-                    str(seed),
-                    "--video-dir",
-                    str(run_dir / "videos" / task_slug),
-                ],
-                cwd=GROOT_DIR,
-                env=COMMON_ENV,
-                log_path=run_dir / f"client_{task_slug}.log",
-            )
-            task_results[task] = _parse_gr00t_metrics(output)
+            log_path = run_dir / f"client_{task_slug}.log"
+            try:
+                output = _run_streaming(
+                    [
+                        "gr00t/eval/sim/LIBERO/libero_uv/.venv/bin/python",
+                        "gr00t/eval/rollout_policy.py",
+                        "--n-episodes",
+                        str(episodes_per_task),
+                        "--policy-client-host",
+                        "127.0.0.1",
+                        "--policy-client-port",
+                        str(GROOT_PORT),
+                        "--max-episode-steps",
+                        str(max_episode_steps),
+                        "--env-name",
+                        task,
+                        "--n-action-steps",
+                        str(n_action_steps),
+                        "--n-envs",
+                        str(n_envs),
+                        "--seed",
+                        str(seed),
+                        "--video-dir",
+                        str(run_dir / "videos" / task_slug),
+                    ],
+                    cwd=GROOT_DIR,
+                    env=COMMON_ENV | quant_env,
+                    log_path=log_path,
+                )
+                task_results[task] = _parse_gr00t_metrics(output) | {"status": "ok", "log": str(log_path)}
+            except subprocess.CalledProcessError as exc:
+                task_results[task] = {
+                    "status": "failed",
+                    "success_rate": None,
+                    "returncode": exc.returncode,
+                    "log": str(log_path),
+                    "tail": "".join(exc.output.splitlines(keepends=True)[-80:]),
+                }
+                print(f"GR00T rollout failed for {task}; continuing so logs and partial outputs are saved.", flush=True)
+                break
     finally:
         stop.set()
         monitor.join(timeout=10)
@@ -631,6 +684,7 @@ def run_gr00t(
     return _write_summary(
         run_name,
         {
+            "run_name": run_name,
             "model": "GR00T N1.7",
             "checkpoint": "nvidia/GR00T-N1.7-LIBERO",
             "suite": suite,
@@ -638,12 +692,16 @@ def run_gr00t(
             "n_envs": n_envs,
             "max_episode_steps": max_episode_steps,
             "n_action_steps": n_action_steps,
+            "live_quant_bits": live_quant_bits,
+            "live_quant_mode": live_quant_mode,
+            "task_limit": task_limit,
             "seed": seed,
             "metrics": {
                 "success_rate": (sum(rates) / len(rates)) if rates else None,
                 "tasks": task_results,
             },
             "max_gpu_memory_mb": _max_memory_mb(gpu_samples),
+            "quant_drift_npz": str(run_dir / "kv_drift.npz") if dump_quant else None,
             "gpu_samples": gpu_samples,
             "logs": {"server": str(run_dir / "server.log"), "task_logs_dir": str(run_dir)},
         },
