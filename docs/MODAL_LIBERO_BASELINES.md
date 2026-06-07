@@ -51,6 +51,37 @@ Run all suites for both models:
 modal run scripts/modal_libero_baselines.py::run_all --suite all --trials-per-task 50 --episodes-per-task 20
 ```
 
+## QuantVLA accuracy matrix
+
+Run full precision, W4A4, W4A8, and activation-only A8 over all four suites:
+
+```bash
+modal run scripts/modal_libero_baselines.py::run_quant_matrix \
+  --models gr00t,pi05 \
+  --presets fp16,w4a4,w4a8,a8 \
+  --suites all \
+  --trials-per-task 50 \
+  --episodes-per-task 20
+```
+
+Run just one model or a smoke-test subset:
+
+```bash
+modal run scripts/modal_libero_baselines.py::run_quant_matrix \
+  --models pi05 \
+  --presets w4a4,w4a8,a8 \
+  --suites libero_spatial \
+  --trials-per-task 1 \
+  --task-limit 1
+```
+
+The local output directory is `reports/libero_quant_matrix_<timestamp>/` by default:
+
+- `accuracy_table.csv` has `Goal`, `Spatial`, `Object`, `Long`, and `Average` columns for both models.
+- `runs.json` stores every raw Modal result, run status, checkpoint path, timing, and memory measurement.
+
+The runner checkpoints both files after every condition, so completed results remain available if a later Modal job fails. Use `--output-dir PATH` for a stable destination. The built-in presets are `fp16`, `w4a4`, `w4a8`, and `a8`; `a8` leaves weights untouched. Add `--quant-scope full` to label and run the full-quantization condition instead of the default action-expert/DiT-MLP condition.
+
 ## Results
 
 List summaries:

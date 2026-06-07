@@ -12,6 +12,8 @@ The functions write raw logs and a small metrics JSON file under
 
 from __future__ import annotations
 
+import csv
+from dataclasses import dataclass
 import json
 import os
 from pathlib import Path
@@ -47,6 +49,7 @@ COMMON_ENV = {
     "PYOPENGL_PLATFORM": "egl",
     "MUJOCO_EGL_DEVICE_ID": "0",
     "NVIDIA_DRIVER_CAPABILITIES": "all",
+    "PYTHONUNBUFFERED": "1",
     "TOKENIZERS_PARALLELISM": "false",
 }
 
@@ -167,6 +170,31 @@ GROOT_IMAGE = (
 app = modal.App("vla-quant-libero-baselines")
 
 LIBERO_SUITES = ("libero_spatial", "libero_object", "libero_goal", "libero_10")
+TABLE_SUITES = ("libero_goal", "libero_spatial", "libero_object", "libero_10")
+TABLE_SUITE_LABELS = {
+    "libero_goal": "Goal",
+    "libero_spatial": "Spatial",
+    "libero_object": "Object",
+    "libero_10": "Long",
+}
+
+
+@dataclass(frozen=True)
+class QuantPreset:
+    name: str
+    method: str
+    precision: str
+    enabled: bool
+    weight_bits: int
+    act_bits: int
+
+
+QUANT_PRESETS: dict[str, QuantPreset] = {
+    "fp16": QuantPreset("fp16", "Full Precision", "FP16", False, 0, 0),
+    "w4a4": QuantPreset("w4a4", "QuantVLA", "W4A4", True, 4, 4),
+    "w4a8": QuantPreset("w4a8", "QuantVLA", "W4A8", True, 4, 8),
+    "a8": QuantPreset("a8", "QuantVLA", "A8", True, 0, 8),
+}
 
 GROOT_TASKS: dict[str, list[str]] = {
     "libero_10": [
@@ -246,7 +274,7 @@ def _run_streaming(
         )
         assert proc.stdout is not None
         for line in proc.stdout:
-            print(line, end="")
+            print(line, end="", flush=True)
             log.write(line)
             log.flush()
             output.append(line)
@@ -390,6 +418,78 @@ def _write_summary(name: str, payload: dict[str, Any]) -> dict[str, Any]:
     return payload | {"summary_path": str(path)}
 
 
+def _slug(value: str) -> str:
+    return re.sub(r"[^a-z0-9]+", "_", value.lower()).strip("_")
+
+
+def _parse_presets(value: str) -> list[QuantPreset]:
+    names = [name.strip().lower() for name in value.split(",") if name.strip()]
+    if not names:
+        raise ValueError("At least one quantization preset is required.")
+    unknown = [name for name in names if name not in QUANT_PRESETS]
+    if unknown:
+        raise ValueError(f"Unknown presets {unknown}. Expected a comma-separated subset of {tuple(QUANT_PRESETS)}.")
+    return [QUANT_PRESETS[name] for name in names]
+
+
+def _success_percent(payload: dict[str, Any]) -> float | None:
+    rate = payload.get("metrics", {}).get("success_rate")
+    return round(100.0 * rate, 3) if rate is not None else None
+
+
+def _matrix_rows(
+    runs: list[dict[str, Any]],
+    presets: list[QuantPreset],
+    models: list[str],
+    quantization_setting: str,
+) -> list[dict[str, Any]]:
+    by_key = {
+        (run["model_key"], run["preset"], run["suite"]): _success_percent(run["result"])
+        for run in runs
+        if run.get("status") == "ok"
+    }
+    rows: list[dict[str, Any]] = []
+    for preset in presets:
+        row: dict[str, Any] = {
+            "Method": preset.method,
+            "Precision": preset.precision,
+            "Quantization Setting": "No quantization" if not preset.enabled else quantization_setting,
+        }
+        for model_key, model_label in (("gr00t", "GR00T N1.7"), ("pi05", "Pi 0.5")):
+            values = []
+            for suite in TABLE_SUITES:
+                value = by_key.get((model_key, preset.name, suite)) if model_key in models else None
+                row[f"{model_label} {TABLE_SUITE_LABELS[suite]}"] = value
+                if value is not None:
+                    values.append(value)
+            row[f"{model_label} Average"] = round(sum(values) / len(values), 3) if values else None
+        rows.append(row)
+    return rows
+
+
+def _write_matrix_outputs(
+    output_dir: Path,
+    runs: list[dict[str, Any]],
+    presets: list[QuantPreset],
+    models: list[str],
+    quantization_setting: str,
+) -> None:
+    output_dir.mkdir(parents=True, exist_ok=True)
+    rows = _matrix_rows(runs, presets, models, quantization_setting)
+    payload = {
+        "models": models,
+        "presets": [preset.name for preset in presets],
+        "quantization_setting": quantization_setting,
+        "runs": runs,
+        "table": rows,
+    }
+    (output_dir / "runs.json").write_text(json.dumps(payload, indent=2, sort_keys=True), encoding="utf-8")
+    with (output_dir / "accuracy_table.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
+        writer.writeheader()
+        writer.writerows(rows)
+
+
 def _max_memory_mb(samples: list[dict[str, Any]]) -> int | None:
     values = [sample["memory_used_mb"] for sample in samples if "memory_used_mb" in sample]
     return max(values) if values else None
@@ -478,6 +578,7 @@ def run_pi05(
     quant_weight_bits: int = 3,
     quant_act_bits: int = 8,
     task_limit: int | None = None,
+    quant_label: str = "",
 ) -> dict[str, Any]:
     """Evaluate pi0.5-LIBERO through OpenPI's native LIBERO client/server."""
     if suite not in LIBERO_SUITES:
@@ -488,7 +589,10 @@ def run_pi05(
     server_ready_s: float | None = None
     eval_start_s: float | None = None
     eval_end_s: float | None = None
-    run_name = f"pi05_{suite}_{int(time.time())}"
+    if quant_weight_bits < 0 or quant_act_bits < 0:
+        raise ValueError("Quantization bit widths must be non-negative.")
+    label = f"_{_slug(quant_label)}" if quant_label else ""
+    run_name = f"pi05_{suite}{label}_{int(time.time())}"
     run_dir = RESULTS_DIR / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     quant_env = {
@@ -589,6 +693,7 @@ def run_pi05(
             "quant_scope": quant_scope,
             "quant_weight_bits": quant_weight_bits,
             "quant_act_bits": quant_act_bits,
+            "quant_label": quant_label,
             "task_limit": task_limit,
             "seed": seed,
             "metrics": metrics,
@@ -633,9 +738,11 @@ def run_gr00t(
     dump_quant: bool = False,
     live_quant_bits: int = 0,
     live_quant_mode: str = "wht_lloydmax",
+    quant_scope: str = "action_expert_mlp",
     quant_weight_bits: int = 3,
     quant_act_bits: int = 8,
     task_limit: int | None = None,
+    quant_label: str = "",
 ) -> dict[str, Any]:
     """Evaluate NVIDIA GR00T N1.7-LIBERO over the tasks in a LIBERO suite."""
     if suite not in GROOT_TASKS:
@@ -646,12 +753,16 @@ def run_gr00t(
     server_ready_s: float | None = None
     eval_start_s: float | None = None
     eval_end_s: float | None = None
-    run_name = f"gr00t_n17_{suite}_{int(time.time())}"
+    if quant_weight_bits < 0 or quant_act_bits < 0:
+        raise ValueError("Quantization bit widths must be non-negative.")
+    label = f"_{_slug(quant_label)}" if quant_label else ""
+    run_name = f"gr00t_n17_{suite}{label}_{int(time.time())}"
     run_dir = RESULTS_DIR / run_name
     run_dir.mkdir(parents=True, exist_ok=True)
     quant_env = {
         "VLA_QUANT_LIVE_BITS": str(live_quant_bits),
         "VLA_QUANT_MODE": live_quant_mode,
+        "VLA_QUANT_SCOPE": quant_scope,
         "VLA_QUANT_WEIGHT_BITS": str(quant_weight_bits),
         "VLA_QUANT_ACT_BITS": str(quant_act_bits),
     }
@@ -779,7 +890,8 @@ def run_gr00t(
                 )
                 task_end_s = time.perf_counter()
                 task_elapsed_s = task_end_s - task_start_s
-                task_results[task] = _parse_gr00t_metrics(output) | {
+                task_metrics = _parse_gr00t_metrics(output)
+                task_results[task] = task_metrics | {
                     "status": "ok",
                     "log": str(log_path),
                     "episodes": episodes_per_task,
@@ -791,6 +903,17 @@ def run_gr00t(
                     if episodes_per_task > 0
                     else None,
                 }
+                task_success_rate = task_metrics["success_rate"]
+                completed_rates = [
+                    result["success_rate"]
+                    for result in task_results.values()
+                    if result["success_rate"] is not None
+                ]
+                print(f"Current task success rate: {task_success_rate}", flush=True)
+                print(
+                    f"Current total success rate: {sum(completed_rates) / len(completed_rates)}",
+                    flush=True,
+                )
             except subprocess.CalledProcessError as exc:
                 task_elapsed_s = time.perf_counter() - task_start_s
                 task_results[task] = {
@@ -830,8 +953,10 @@ def run_gr00t(
             "n_action_steps": n_action_steps,
             "live_quant_bits": live_quant_bits,
             "live_quant_mode": live_quant_mode,
+            "quant_scope": quant_scope,
             "quant_weight_bits": quant_weight_bits,
             "quant_act_bits": quant_act_bits,
+            "quant_label": quant_label,
             "task_limit": task_limit,
             "seed": seed,
             "metrics": {
@@ -867,6 +992,90 @@ def run_all(episodes_per_task: int = 20, trials_per_task: int = 50, suite: str =
     for suite_name in suites:
         print(json.dumps(run_pi05.remote(suite=suite_name, trials_per_task=trials_per_task), indent=2))
         print(json.dumps(run_gr00t.remote(suite=suite_name, episodes_per_task=episodes_per_task), indent=2))
+
+
+@app.local_entrypoint()
+def run_quant_matrix(
+    models: str = "gr00t,pi05",
+    presets: str = "fp16,w4a4,w4a8,a8",
+    suites: str = "all",
+    trials_per_task: int = 50,
+    episodes_per_task: int = 20,
+    n_envs: int = 5,
+    seed: int = 7,
+    replan_steps: int = 5,
+    quant_scope: str = "action_expert_mlp",
+    task_limit: int = 0,
+    output_dir: str = "",
+) -> None:
+    """Run a reproducible LIBERO model/precision matrix and write a paper-style table."""
+    model_names = [name.strip().lower() for name in models.split(",") if name.strip()]
+    aliases = {"pi0.5": "pi05", "pi0_5": "pi05", "groot": "gr00t"}
+    model_names = [aliases.get(name, name) for name in model_names]
+    unknown_models = [name for name in model_names if name not in {"gr00t", "pi05"}]
+    if not model_names or unknown_models:
+        raise ValueError(f"Models must be a comma-separated subset of gr00t,pi05; got {models!r}.")
+
+    selected_presets = _parse_presets(presets)
+    suite_names = list(LIBERO_SUITES) if suites.strip().lower() == "all" else [
+        name.strip() for name in suites.split(",") if name.strip()
+    ]
+    unknown_suites = [name for name in suite_names if name not in LIBERO_SUITES]
+    if not suite_names or unknown_suites:
+        raise ValueError(f"Suites must be 'all' or a comma-separated subset of {LIBERO_SUITES}.")
+    if quant_scope not in {"action_expert_mlp", "full"}:
+        raise ValueError("quant_scope must be 'action_expert_mlp' or 'full'.")
+
+    setting = "w/o DiT attention" if quant_scope == "action_expert_mlp" else "Full quantization"
+    destination = Path(output_dir) if output_dir else Path("reports") / f"libero_quant_matrix_{int(time.time())}"
+    runs: list[dict[str, Any]] = []
+    print(f"Writing matrix checkpoints to {destination.resolve()}", flush=True)
+
+    for preset in selected_presets:
+        for model_name in model_names:
+            for suite_name in suite_names:
+                record: dict[str, Any] = {
+                    "model_key": model_name,
+                    "preset": preset.name,
+                    "suite": suite_name,
+                    "status": "running",
+                }
+                runs.append(record)
+                _write_matrix_outputs(destination, runs, selected_presets, model_names, setting)
+                print(f"\nRunning {model_name} {preset.precision} on {suite_name}", flush=True)
+                kwargs = {
+                    "suite": suite_name,
+                    "seed": seed,
+                    "live_quant_bits": 1 if preset.enabled else 0,
+                    "live_quant_mode": "quantvla_itq3s",
+                    "quant_weight_bits": preset.weight_bits,
+                    "quant_act_bits": preset.act_bits,
+                    "task_limit": task_limit or None,
+                    "quant_label": preset.name,
+                }
+                try:
+                    if model_name == "pi05":
+                        result = run_pi05.remote(
+                            **kwargs,
+                            trials_per_task=trials_per_task,
+                            replan_steps=replan_steps,
+                            quant_scope=quant_scope,
+                        )
+                    else:
+                        result = run_gr00t.remote(
+                            **kwargs,
+                            episodes_per_task=episodes_per_task,
+                            n_envs=n_envs,
+                            quant_scope=quant_scope,
+                        )
+                    record.update(status="ok", result=result)
+                except Exception as exc:
+                    record.update(status="failed", error=f"{type(exc).__name__}: {exc}")
+                    print(f"Run failed: {record['error']}", flush=True)
+                _write_matrix_outputs(destination, runs, selected_presets, model_names, setting)
+
+    print(f"\nWrote {destination / 'accuracy_table.csv'}", flush=True)
+    print(f"Wrote {destination / 'runs.json'}", flush=True)
 
 
 if __name__ == "__main__":
