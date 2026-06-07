@@ -365,9 +365,15 @@ def _sample_gpu(stop: threading.Event, samples: list[dict[str, Any]], interval_s
 def _parse_openpi_metrics(output: str) -> dict[str, Any]:
     rates = re.findall(r"Total success rate:\s*([0-9.]+)", output)
     episodes = re.findall(r"Total episodes:\s*(\d+)", output)
+    task_names = list(dict.fromkeys(re.findall(r"Task:\s*(.+)", output)))
+    task_rates = [float(rate) for rate in re.findall(r"Current task success rate:\s*([0-9.]+)", output)]
     return {
         "success_rate": float(rates[-1]) if rates else None,
         "episodes": int(episodes[-1]) if episodes else None,
+        "tasks": [
+            {"task": task_name, "success_rate": task_rate}
+            for task_name, task_rate in zip(task_names, task_rates, strict=False)
+        ],
     }
 
 
