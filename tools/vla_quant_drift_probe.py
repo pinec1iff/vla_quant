@@ -127,7 +127,7 @@ def compute_stats(data: dict[str, np.ndarray], bits: int, rotate: bool) -> list[
                     mean=float(np.mean(x)),
                     std=std,
                     rms=float(np.sqrt(np.mean(x * x))),
-                    kurtosis=float(np.mean((centered / std) ** 4)),
+                    kurtosis=float(np.mean((centered / std) ** 4)), #measures skewness
                     static_mse=float(np.mean((x - x_static) ** 2)),
                     per_step_mse=float(np.mean((x - x_step) ** 2)),
                 )
@@ -163,7 +163,7 @@ def compute_comparison_stats(
     rotate: bool,
 ) -> list[CompareStats]:
     rows: list[CompareStats] = []
-    for condition, data in (("unquantized", baseline), ("wht_lloydmax", quantized)):
+    for condition, data in (("unquantized", baseline), ("quantized", quantized)):
         for component in _pair_components(data):
             by_step = {
                 step: _flatten(hadamard(arr) if rotate else arr)
@@ -214,30 +214,38 @@ def plot_comparison(
     fig, axes = plt.subplots(2, 2, figsize=(12.0, 7.6), constrained_layout=True)
     key_component, value_component = _kv_components(baseline)
     model_name = "GR00T" if any(c.startswith("gr00t") for c in components) else "pi0.5"
-    condition_colors = {"unquantized": "#1f77b4", "wht_lloydmax": "#d62728"}
-    series_colors = {
-        ("unquantized", key_component): "#1f77b4",   # blue
-        ("unquantized", value_component): "#ff7f0e",  # orange
-        ("wht_lloydmax", key_component): "#d62728",  # red
-        ("wht_lloydmax", value_component): "#2ca02c",  # green
-    }
-    component_styles = {
-        key_component: {"linestyle": "-", "marker": "o", "suffix": "K"},
-        value_component: {"linestyle": "--", "marker": "s", "suffix": "V"},
-    }
+    condition_colors = {"unquantized": "#1f77b4", "quantized": "#d62728"}
+    component_palette = ["#1f77b4", "#ff7f0e", "#9467bd", "#8c564b"]
+    quantized_palette = ["#d62728", "#2ca02c", "#e377c2", "#7f7f7f"]
+    component_styles = {}
+    for idx, component in enumerate(components):
+        suffix = component.removeprefix("pi05_").removeprefix("gr00t_").replace("_", " ")
+        if component == key_component:
+            suffix = "K"
+        elif component == value_component:
+            suffix = "V"
+        component_styles[component] = {
+            "linestyle": "-" if idx % 2 == 0 else "--",
+            "marker": "o" if idx % 2 == 0 else "s",
+            "suffix": suffix,
+            "baseline_color": component_palette[idx % len(component_palette)],
+            "quantized_color": quantized_palette[idx % len(quantized_palette)],
+        }
 
+    #top left plot RMS Error
     ax = axes[0, 0]
-    for condition in ("unquantized", "wht_lloydmax"):
+    for condition in ("unquantized", "quantized"):
         for component in components:
             vals = [r for r in rows if r.condition == condition and r.component == component]
             if vals:
+                style = component_styles.get(component, {})
                 ax.plot(
                     [r.step for r in vals],
                     [r.rms for r in vals],
-                    marker=component_styles.get(component, {}).get("marker", "o"),
-                    color=series_colors.get((condition, component), condition_colors[condition]),
-                    linestyle=component_styles.get(component, {}).get("linestyle", "-"),
-                    label=f"{condition} {component_styles.get(component, {}).get('suffix', component)}",
+                    marker=style.get("marker", "o"),
+                    color=style.get("baseline_color" if condition == "unquantized" else "quantized_color", condition_colors[condition]),
+                    linestyle=style.get("linestyle", "-"),
+                    label=f"{condition} {style.get('suffix', component)}",
                 )
     ax.set_title("RMS energy across denoising step")
     ax.set_xlabel("denoising step")
@@ -245,18 +253,20 @@ def plot_comparison(
     ax.grid(alpha=0.25)
     ax.legend(fontsize=8)
 
+    #second plot Relative Drift from First Denoising Step (top right)
     ax = axes[0, 1]
-    for condition in ("unquantized", "wht_lloydmax"):
+    for condition in ("unquantized", "quantized"):
         for component in components:
             vals = [r for r in rows if r.condition == condition and r.component == component]
             if vals:
+                style = component_styles.get(component, {})
                 ax.plot(
                     [r.step for r in vals],
                     [r.relative_drift for r in vals],
-                    marker=component_styles.get(component, {}).get("marker", "o"),
-                    color=series_colors.get((condition, component), condition_colors[condition]),
-                    linestyle=component_styles.get(component, {}).get("linestyle", "-"),
-                    label=f"{condition} {component_styles.get(component, {}).get('suffix', component)}",
+                    marker=style.get("marker", "o"),
+                    color=style.get("baseline_color" if condition == "unquantized" else "quantized_color", condition_colors[condition]),
+                    linestyle=style.get("linestyle", "-"),
+                    label=f"{condition} {style.get('suffix', component)}",
                 )
     ax.set_title("Relative drift from first denoising step")
     ax.set_xlabel("denoising step")
@@ -264,6 +274,7 @@ def plot_comparison(
     ax.grid(alpha=0.25)
     ax.legend(fontsize=8)
 
+    #third pot (static vs step indexed vs live quantization Error)
     ax = axes[1, 0]
     metrics = [
         ("static", lambda vals: [r.static_mse for r in vals]),
@@ -272,7 +283,7 @@ def plot_comparison(
     ]
     x = np.arange(len(metrics))
     width = 0.34
-    for offset, condition in ((-width / 2, "unquantized"), (width / 2, "wht_lloydmax")):
+    for offset, condition in ((-width / 2, "unquantized"), (width / 2, "quantized")):
         vals = [r for r in rows if r.condition == condition]
         heights = []
         for _, getter in metrics:
@@ -293,14 +304,13 @@ def plot_comparison(
     ax.legend(fontsize=8, title="condition")
     ax.grid(axis="y", alpha=0.25)
 
+    # fourth plot late-step K/V distribution: unquantized vs Lloyd Max (bottom right)
     ax = axes[1, 1]
-    quant_key_component, quant_value_component = f"{key_component}_quant", f"{value_component}_quant"
-    hist_specs = [
-        ("unquantized K", baseline, key_component, "-", series_colors[("unquantized", key_component)]),
-        ("unquantized V", baseline, value_component, "--", series_colors[("unquantized", value_component)]),
-        ("WHT-LM K", quantized, quant_key_component, "-", series_colors[("wht_lloydmax", key_component)]),
-        ("WHT-LM V", quantized, quant_value_component, "--", series_colors[("wht_lloydmax", value_component)]),
-    ]
+    hist_specs = []
+    for component in components[:2]:
+        style = component_styles[component]
+        hist_specs.append((f"unquantized {style['suffix']}", baseline, component, style["linestyle"], style["baseline_color"]))
+        hist_specs.append((f"quantized {style['suffix']}", quantized, f"{component}_quant", style["linestyle"], style["quantized_color"]))
     for label, data, component, style, color in hist_specs:
         by_step = _component_steps(data, component)
         if not by_step:
@@ -309,8 +319,8 @@ def plot_comparison(
         x = by_step[step].reshape(-1)
         bins = np.linspace(np.percentile(x, 0.5), np.percentile(x, 99.5), 80)
         ax.hist(x, bins=bins, density=True, histtype="step", linestyle=style, color=color, label=label)
-    ax.set_title("Late-step K/V distribution: unquantized vs WHT-Lloyd-Max")
-    ax.set_xlabel("K/V value")
+    ax.set_title("Late-step distribution: unquantized vs quantized")
+    ax.set_xlabel("activation value")
     ax.set_ylabel("density")
     ax.legend(fontsize=7)
 
