@@ -1,4 +1,4 @@
-"""Run LIBERO baseline evaluations for pi0.5 and GR00T N1.7 on Modal.
+"""Run LIBERO baseline evaluations for pi0.5, GR00T N1.7, and OpenVLA on Modal.
 
 Usage examples:
 
@@ -34,6 +34,8 @@ HOURS = 60 * MINUTES
 RESULTS_DIR = Path("/results/libero_baselines")
 OPENPI_DIR = Path("/workspace/openpi")
 GROOT_DIR = Path("/workspace/Isaac-GR00T")
+OPENVLA_DIR = Path("/workspace/openvla")
+OPENVLA_CACHE_DIR = Path("/model-cache")
 
 OPENPI_PORT = 8000
 GROOT_PORT = 5555
@@ -167,6 +169,51 @@ GROOT_IMAGE = (
     )
 )
 
+OPENVLA_IMAGE = (
+    modal.Image.from_registry(
+        "nvidia/cuda:12.1.1-cudnn8-runtime-ubuntu22.04",
+        add_python="3.10",
+    )
+    .apt_install(
+        "build-essential",
+        "clang",
+        "cmake",
+        "git",
+        "git-lfs",
+        "libegl1",
+        "libegl1-mesa-dev",
+        "libgl1-mesa-glx",
+        "libglib2.0-0",
+        "libglfw3-dev",
+        "libglew-dev",
+        "libglu1-mesa",
+        "libosmesa6-dev",
+        "libsm6",
+        "libxext6",
+        "libxrender1",
+        "ninja-build",
+    )
+    .pip_install("uv==0.5.1")
+    .env(COMMON_ENV | {"UV_LINK_MODE": "copy", "OPENVLA_IMAGE_REV": "4"})
+    .run_commands(
+        "clang --version && cmake --version && ninja --version",
+        "git clone https://github.com/openvla/openvla.git /workspace/openvla && cd /workspace/openvla && git checkout c8f03f4",
+        "uv pip install --system torch==2.2.0 torchvision==0.17.0 torchaudio==2.2.0 --index-url https://download.pytorch.org/whl/cu121",
+        "uv pip install --system 'https://github.com/Dao-AILab/flash-attention/releases/download/v2.5.5/flash_attn-2.5.5%2Bcu122torch2.2cxx11abiFALSE-cp310-cp310-linux_x86_64.whl'",
+        "cd /workspace/openvla && uv pip install --system -r experiments/robot/libero/libero_requirements.txt",
+        "uv pip uninstall --system opencv-python opencv-python-headless || true",
+        "uv pip install --system numpy==1.26.4 opencv-python==4.10.0.84 'accelerate>=0.25.0' draccus==0.8.0 einops json-numpy jsonlines matplotlib peft==0.11.1 protobuf rich sentencepiece==0.1.99 tensorflow==2.15.0 tensorflow-datasets==4.9.3 tensorflow-graphics==2021.12.3 timm==0.9.10 tokenizers==0.19.1 transformers==4.40.1 wandb",
+        "uv pip install --system --no-deps --force-reinstall git+https://github.com/moojink/dlimp_openvla",
+        "cd /workspace/openvla && uv pip install --system -e . --no-deps",
+        "git clone --depth 1 https://github.com/Lifelong-Robot-Learning/LIBERO.git /workspace/LIBERO",
+        "cd /workspace/LIBERO && uv pip install --system -e .",
+        "mkdir -p /root/.libero && printf 'benchmark_root: /workspace/LIBERO/libero/libero\\nbddl_files: /workspace/LIBERO/libero/libero/bddl_files\\ninit_states: /workspace/LIBERO/libero/libero/init_files\\ndatasets: /workspace/LIBERO/libero/datasets\\nassets: /workspace/LIBERO/libero/libero/assets\\n' > /root/.libero/config.yaml",
+        "cd /workspace/openvla && PYTHONPATH=/workspace/openvla:/workspace/LIBERO python -c \"import accelerate, dlimp, draccus, einops, flash_attn, json_numpy, jsonlines, matplotlib, numpy, peft, rich, sentencepiece, tensorflow as tf, tensorflow_datasets, tensorflow_graphics, torch, torchaudio, wandb; assert numpy.__version__ == '1.26.4'; assert tf.__version__ == '2.15.0'; assert torch.__version__.startswith('2.2.0'); assert flash_attn.__version__.startswith('2.5.5'); assert torch.ones(1).numpy()[0] == 1; assert tuple(tf.image.resize(tf.zeros((4, 4, 3)), (2, 2)).shape) == (2, 2, 3); from libero.libero import benchmark; assert benchmark.get_benchmark_dict()['libero_spatial']().n_tasks == 10; import experiments.robot.libero.run_libero_eval\"",
+        "mkdir -p /usr/share/glvnd/egl_vendor.d && printf '{\"file_format_version\":\"1.0.0\",\"ICD\":{\"library_path\":\"libEGL_nvidia.so.0\"}}' > /usr/share/glvnd/egl_vendor.d/10_nvidia.json",
+    )
+    .workdir(str(OPENVLA_DIR))
+)
+
 app = modal.App("vla-quant-libero-baselines")
 
 LIBERO_SUITES = ("libero_spatial", "libero_object", "libero_goal", "libero_10")
@@ -176,6 +223,27 @@ TABLE_SUITE_LABELS = {
     "libero_spatial": "Spatial",
     "libero_object": "Object",
     "libero_10": "Long",
+}
+MODEL_LABELS = {
+    "gr00t": "GR00T N1.7",
+    "pi05": "Pi 0.5",
+    "openvla": "OpenVLA 7B Default",
+}
+OPENVLA_CHECKPOINTS = {
+    "libero_spatial": "openvla/openvla-7b-finetuned-libero-spatial",
+    "libero_object": "openvla/openvla-7b-finetuned-libero-object",
+    "libero_goal": "openvla/openvla-7b-finetuned-libero-goal",
+    "libero_10": "openvla/openvla-7b-finetuned-libero-10",
+}
+if set(OPENVLA_CHECKPOINTS) != set(LIBERO_SUITES):
+    raise ValueError("OPENVLA_CHECKPOINTS must define exactly one checkpoint per LIBERO suite.")
+for suite_name, checkpoint_name in OPENVLA_CHECKPOINTS.items():
+    expected_suffix = suite_name.replace("_", "-")
+    if not checkpoint_name.endswith(expected_suffix):
+        raise ValueError(f"OpenVLA checkpoint for {suite_name} should end with {expected_suffix!r}.")
+QUANTIZABLE_TRANSFORMER_LAYERS = {
+    "gr00t": 12,
+    "pi05": 18,
 }
 
 
@@ -255,6 +323,7 @@ def _run_streaming(
     env: dict[str, str] | None,
     log_path: Path,
     check: bool = True,
+    line_callback: Any | None = None,
 ) -> str:
     merged_env = os.environ.copy()
     if env:
@@ -278,6 +347,8 @@ def _run_streaming(
             log.write(line)
             log.flush()
             output.append(line)
+            if line_callback is not None:
+                line_callback(line)
         returncode = proc.wait()
     if check and returncode:
         raise subprocess.CalledProcessError(returncode, cmd, "".join(output))
@@ -377,6 +448,7 @@ def _sample_gpu(stop: threading.Event, samples: list[dict[str, Any]], interval_s
                 timestamp, index, name, mem_used, mem_total, util = [part.strip() for part in line.split(",")]
                 samples.append(
                     {
+                        "monotonic_s": time.perf_counter(),
                         "timestamp": timestamp,
                         "gpu_index": int(index),
                         "gpu_name": name,
@@ -388,6 +460,51 @@ def _sample_gpu(stop: threading.Event, samples: list[dict[str, Any]], interval_s
         except Exception as exc:  # nvidia-smi can be temporarily unavailable during container startup.
             samples.append({"error": str(exc)})
         stop.wait(interval_s)
+
+
+class _EpisodeMemoryTracker:
+    def __init__(self, gpu_samples: list[dict[str, Any]], *, suite: str, task: str | None = None):
+        self.gpu_samples = gpu_samples
+        self.suite = suite
+        self.task = task
+        self.next_sample = 0
+        self.episode = 0
+        self.records: list[dict[str, Any]] = []
+
+    def consume_line(self, line: str) -> None:
+        task_match = re.search(r"Task:\s*(.+)", line)
+        if task_match:
+            self.task = task_match.group(1).strip()
+        if re.search(r"Starting episode\s+\d+", line):
+            self.next_sample = len(self.gpu_samples)
+
+        match = re.search(r"# episodes completed so far:\s*(\d+)", line)
+        if match is None:
+            match = re.search(r"Episode\s+(\d+)/\d+\s+complete:", line)
+        if match is None:
+            return
+
+        reported_episode = int(match.group(1))
+        segment = [
+            sample
+            for sample in self.gpu_samples[self.next_sample :]
+            if "memory_used_mb" in sample
+        ]
+        self.next_sample = len(self.gpu_samples)
+        self.episode += 1
+        current_mb = segment[-1]["memory_used_mb"] if segment else None
+        peak_mb = max((sample["memory_used_mb"] for sample in segment), default=None)
+        self.records.append(
+            {
+                "episode": self.episode,
+                "reported_episode": reported_episode,
+                "suite": self.suite,
+                "task": self.task,
+                "memory_used_gb_at_completion": _memory_gb(current_mb),
+                "peak_memory_gb_during_episode": _memory_gb(peak_mb),
+                "gpu_sample_count": len(segment),
+            }
+        )
 
 
 def _parse_openpi_metrics(output: str) -> dict[str, Any]:
@@ -408,6 +525,32 @@ def _parse_openpi_metrics(output: str) -> dict[str, Any]:
 def _parse_gr00t_metrics(output: str) -> dict[str, Any]:
     rates = re.findall(r"success rate:\s*([0-9.]+)", output)
     return {"success_rate": float(rates[-1]) if rates else None}
+
+
+def _parse_openvla_metrics(output: str) -> dict[str, Any]:
+    rates = re.findall(r"Total success rate:\s*([0-9.]+)", output)
+    if not rates:
+        rates = re.findall(r"Total success rate:\s*\d+/\d+\s*=\s*([0-9.]+)", output)
+    if not rates:
+        rates = re.findall(r"Current total success rate:\s*([0-9.]+)", output)
+    episodes = re.findall(r"Total episodes:\s*(\d+)", output)
+    if not episodes:
+        episodes = re.findall(r"Total # episodes completed:\s*(\d+)", output)
+    if not episodes:
+        episodes = re.findall(r"# episodes completed so far:\s*(\d+)", output)
+    task_names = list(dict.fromkeys(re.findall(r"Task:\s*(.+)", output)))
+    task_rates = [float(rate) for rate in re.findall(r"Current task success rate:\s*([0-9.]+)", output)]
+    success_rate = float(rates[-1]) if rates else None
+    if success_rate is None and task_rates:
+        success_rate = sum(task_rates) / len(task_rates)
+    return {
+        "success_rate": success_rate,
+        "episodes": int(episodes[-1]) if episodes else None,
+        "tasks": [
+            {"task": task_name, "success_rate": task_rate}
+            for task_name, task_rate in zip(task_names, task_rates, strict=False)
+        ],
+    }
 
 
 def _write_summary(name: str, payload: dict[str, Any]) -> dict[str, Any]:
@@ -437,6 +580,12 @@ def _success_percent(payload: dict[str, Any]) -> float | None:
     return round(100.0 * rate, 3) if rate is not None else None
 
 
+def _quantized_layer_count(model_key: str, preset: QuantPreset) -> int | None:
+    if model_key not in QUANTIZABLE_TRANSFORMER_LAYERS:
+        return None
+    return QUANTIZABLE_TRANSFORMER_LAYERS[model_key] if preset.enabled else 0
+
+
 def _matrix_rows(
     runs: list[dict[str, Any]],
     presets: list[QuantPreset],
@@ -455,7 +604,16 @@ def _matrix_rows(
             "Precision": preset.precision,
             "Quantization Setting": "No quantization" if not preset.enabled else quantization_setting,
         }
-        for model_key, model_label in (("gr00t", "GR00T N1.7"), ("pi05", "Pi 0.5")):
+        for model_key, model_label in MODEL_LABELS.items():
+            quantized_layers = _quantized_layer_count(model_key, preset)
+            total_layers = QUANTIZABLE_TRANSFORMER_LAYERS.get(model_key)
+            row[f"{model_label} Quantized Layers"] = quantized_layers
+            row[f"{model_label} Total Transformer Layers"] = total_layers
+            row[f"{model_label} Layer Coverage Percent"] = (
+                round(100.0 * quantized_layers / total_layers, 3)
+                if quantized_layers is not None and total_layers
+                else None
+            )
             values = []
             for suite in TABLE_SUITES:
                 value = by_key.get((model_key, preset.name, suite)) if model_key in models else None
@@ -488,6 +646,72 @@ def _write_matrix_outputs(
         writer = csv.DictWriter(stream, fieldnames=list(rows[0]))
         writer.writeheader()
         writer.writerows(rows)
+    memory_rows = []
+    for run in runs:
+        if run.get("status") != "ok":
+            continue
+        result = run["result"]
+        for episode in result.get("episode_memory", []):
+            memory_rows.append(
+                {
+                    "model": run["model_key"],
+                    "preset": run["preset"],
+                    "suite": run["suite"],
+                    "run_name": result.get("run_name"),
+                    **episode,
+                }
+            )
+    memory_fields = [
+        "model",
+        "preset",
+        "suite",
+        "run_name",
+        "episode",
+        "reported_episode",
+        "task",
+        "memory_used_gb_at_completion",
+        "peak_memory_gb_during_episode",
+        "gpu_sample_count",
+    ]
+    with (output_dir / "episode_memory.csv").open("w", newline="", encoding="utf-8") as stream:
+        writer = csv.DictWriter(stream, fieldnames=memory_fields)
+        writer.writeheader()
+        writer.writerows(memory_rows)
+    layer_rows = []
+    for preset in presets:
+        for model_key in ("gr00t", "pi05"):
+            if model_key not in models:
+                continue
+            quantized_layers = _quantized_layer_count(model_key, preset)
+            total_layers = QUANTIZABLE_TRANSFORMER_LAYERS[model_key]
+            layer_rows.append(
+                {
+                    "model": model_key,
+                    "model_label": MODEL_LABELS[model_key],
+                    "preset": preset.name,
+                    "precision": preset.precision,
+                    "quantization_setting": (
+                        "No quantization" if not preset.enabled else quantization_setting
+                    ),
+                    "quantized_transformer_layers": quantized_layers,
+                    "total_transformer_layers": total_layers,
+                    "layer_coverage_percent": round(100.0 * quantized_layers / total_layers, 3),
+                }
+            )
+    with (output_dir / "quantized_layers.csv").open("w", newline="", encoding="utf-8") as stream:
+        fields = [
+            "model",
+            "model_label",
+            "preset",
+            "precision",
+            "quantization_setting",
+            "quantized_transformer_layers",
+            "total_transformer_layers",
+            "layer_coverage_percent",
+        ]
+        writer = csv.DictWriter(stream, fieldnames=fields)
+        writer.writeheader()
+        writer.writerows(layer_rows)
 
 
 def _max_memory_mb(samples: list[dict[str, Any]]) -> int | None:
@@ -497,6 +721,15 @@ def _max_memory_mb(samples: list[dict[str, Any]]) -> int | None:
 
 def _memory_gb(memory_mb: int | None) -> float | None:
     return round(memory_mb / 1024, 3) if memory_mb is not None else None
+
+
+def _mean_episode_peak_gb(records: list[dict[str, Any]]) -> float | None:
+    values = [
+        record["peak_memory_gb_during_episode"]
+        for record in records
+        if record.get("peak_memory_gb_during_episode") is not None
+    ]
+    return round(sum(values) / len(values), 3) if values else None
 
 
 def _estimated_quantized_component_savings(bits: int) -> float | None:
@@ -572,6 +805,7 @@ def run_pi05(
     replan_steps: int = 5,
     checkpoint: str = "gs://openpi-assets/checkpoints/pi05_libero",
     dump_quant: bool = False,
+    channel_stats: bool = False,
     live_quant_bits: int = 0,
     live_quant_mode: str = "wht_lloydmax",
     quant_scope: str = "action_expert_mlp",
@@ -611,8 +845,16 @@ def run_pi05(
             "VLA_QUANT_MAX_STEPS": "12",
             "VLA_QUANT_MAX_VALUES": "65536",
         }
+    if channel_stats:
+        quant_env |= {
+            "VLA_QUANT_CHANNEL_STATS": str(run_dir / "channel_stats.json"),
+            "VLA_QUANT_JAX_LAYER_STRIDE": "18",
+            "VLA_QUANT_JAX_LAYER_OFFSET": "0",
+            "VLA_QUANT_MAX_STEPS": "12",
+        }
     stop = threading.Event()
     gpu_samples: list[dict[str, Any]] = []
+    episode_memory = _EpisodeMemoryTracker(gpu_samples, suite=suite)
     monitor = threading.Thread(target=_sample_gpu, args=(stop, gpu_samples), daemon=True)
     monitor.start()
 
@@ -667,6 +909,7 @@ def run_pi05(
             }
             | quant_env,
             log_path=run_dir / "client.log",
+            line_callback=episode_memory.consume_line,
         )
         eval_end_s = time.perf_counter()
     finally:
@@ -708,10 +951,13 @@ def run_pi05(
             ),
             "max_gpu_memory_mb": max_memory_mb,
             "max_gpu_memory_gb": _memory_gb(max_memory_mb),
+            "mean_peak_memory_gb_per_episode": _mean_episode_peak_gb(episode_memory.records),
+            "episode_memory": episode_memory.records,
             "estimated_quantized_component_relative_savings_percent": _estimated_quantized_component_savings(
                 quant_weight_bits if live_quant_mode == "quantvla_itq3s" and live_quant_bits > 0 else live_quant_bits
             ),
             "quant_drift_npz": str(run_dir / "kv_drift.npz") if dump_quant else None,
+            "channel_stats_json": str(run_dir / "channel_stats.json") if channel_stats else None,
             "gpu_samples": gpu_samples,
             "logs": {"server": str(run_dir / "server.log"), "client": str(run_dir / "client.log")},
         },
@@ -736,6 +982,7 @@ def run_gr00t(
     seed: int = 7,
     checkpoint_root: str = "/cache/gr00t/GR00T-N1.7-LIBERO",
     dump_quant: bool = False,
+    channel_stats: bool = False,
     live_quant_bits: int = 0,
     live_quant_mode: str = "wht_lloydmax",
     quant_scope: str = "action_expert_mlp",
@@ -774,8 +1021,15 @@ def run_gr00t(
             "VLA_QUANT_MAX_VALUES": "65536",
             "GR00T_POLICY_CLIENT_TIMEOUT_MS": "600000",
         }
+    if channel_stats:
+        quant_env |= {
+            "VLA_QUANT_CHANNEL_STATS": str(run_dir / "channel_stats.json"),
+            "VLA_QUANT_GROOT_LOG_LAYER": "0",
+            "VLA_QUANT_MAX_STEPS": "12",
+        }
     stop = threading.Event()
     gpu_samples: list[dict[str, Any]] = []
+    episode_memory = _EpisodeMemoryTracker(gpu_samples, suite=suite)
     monitor = threading.Thread(target=_sample_gpu, args=(stop, gpu_samples), daemon=True)
     monitor.start()
 
@@ -857,6 +1111,7 @@ def run_gr00t(
         eval_start_s = time.perf_counter()
         tasks = GROOT_TASKS[suite][:task_limit] if task_limit else GROOT_TASKS[suite]
         for task in tasks:
+            episode_memory.task = task.removeprefix("libero_sim/")
             task_slug = task.removeprefix("libero_sim/").replace("/", "_")
             log_path = run_dir / f"client_{task_slug}.log"
             task_start_s = time.perf_counter()
@@ -887,6 +1142,7 @@ def run_gr00t(
                     cwd=GROOT_DIR,
                     env=COMMON_ENV | quant_env,
                     log_path=log_path,
+                    line_callback=episode_memory.consume_line,
                 )
                 task_end_s = time.perf_counter()
                 task_elapsed_s = task_end_s - task_start_s
@@ -975,19 +1231,128 @@ def run_gr00t(
             ),
             "max_gpu_memory_mb": max_memory_mb,
             "max_gpu_memory_gb": _memory_gb(max_memory_mb),
+            "mean_peak_memory_gb_per_episode": _mean_episode_peak_gb(episode_memory.records),
+            "episode_memory": episode_memory.records,
             "estimated_quantized_component_relative_savings_percent": _estimated_quantized_component_savings(
                 quant_weight_bits if live_quant_mode == "quantvla_itq3s" and live_quant_bits > 0 else live_quant_bits
             ),
             "quant_drift_npz": str(run_dir / "kv_drift.npz") if dump_quant else None,
+            "channel_stats_json": str(run_dir / "channel_stats.json") if channel_stats else None,
             "gpu_samples": gpu_samples,
             "logs": {"server": str(run_dir / "server.log"), "task_logs_dir": str(run_dir)},
         },
     )
 
 
+@app.function(
+    image=OPENVLA_IMAGE,
+    gpu="A100-80GB",
+    timeout=24 * HOURS,
+    startup_timeout=2 * HOURS,
+    # The OpenVLA image contains build-time files under /cache, so Modal
+    # requires this volume to use a separate, empty mount point.
+    volumes={"/results": RESULTS_VOLUME, str(OPENVLA_CACHE_DIR): CACHE_VOLUME},
+)
+def run_openvla(
+    suite: str = "libero_spatial",
+    trials_per_task: int = 1,
+    seed: int = 7,
+    checkpoint: str = "",
+) -> dict[str, Any]:
+    """Run the official OpenVLA LIBERO checkpoint without custom quantization."""
+    if suite not in LIBERO_SUITES:
+        raise ValueError(f"Unknown suite {suite!r}. Expected one of {LIBERO_SUITES}.")
+    if trials_per_task <= 0:
+        raise ValueError("trials_per_task must be positive.")
+
+    checkpoint = checkpoint or OPENVLA_CHECKPOINTS[suite]
+    run_start_s = time.perf_counter()
+    run_name = f"openvla_{suite}_default_{int(time.time())}"
+    run_dir = RESULTS_DIR / run_name
+    run_dir.mkdir(parents=True, exist_ok=True)
+    stop = threading.Event()
+    gpu_samples: list[dict[str, Any]] = []
+    episode_memory = _EpisodeMemoryTracker(gpu_samples, suite=suite)
+    monitor = threading.Thread(target=_sample_gpu, args=(stop, gpu_samples), daemon=True)
+    monitor.start()
+    eval_start_s = time.perf_counter()
+    eval_end_s: float | None = None
+    try:
+        output = _run_streaming(
+            [
+                "python",
+                "experiments/robot/libero/run_libero_eval.py",
+                "--model_family",
+                "openvla",
+                "--pretrained_checkpoint",
+                checkpoint,
+                "--task_suite_name",
+                suite,
+                "--center_crop",
+                "True",
+                "--num_trials_per_task",
+                str(trials_per_task),
+                "--seed",
+                str(seed),
+                "--use_wandb",
+                "False",
+            ],
+            cwd=OPENVLA_DIR,
+            env=COMMON_ENV
+            | {
+                "HF_HOME": str(OPENVLA_CACHE_DIR / "huggingface"),
+                "HF_HUB_CACHE": str(OPENVLA_CACHE_DIR / "huggingface/hub"),
+                "TRANSFORMERS_CACHE": str(OPENVLA_CACHE_DIR / "huggingface/hub"),
+                "PYTHONPATH": f"{OPENVLA_DIR}:/workspace/LIBERO",
+            },
+            log_path=run_dir / "eval.log",
+            line_callback=episode_memory.consume_line,
+        )
+        eval_end_s = time.perf_counter()
+    finally:
+        if eval_end_s is None:
+            eval_end_s = time.perf_counter()
+        stop.set()
+        monitor.join(timeout=10)
+        RESULTS_VOLUME.commit()
+        CACHE_VOLUME.commit()
+
+    metrics = _parse_openvla_metrics(output)
+    run_end_s = time.perf_counter()
+    max_memory_mb = _max_memory_mb(gpu_samples)
+    return _write_summary(
+        run_name,
+        {
+            "run_name": run_name,
+            "model": "OpenVLA 7B Default",
+            "checkpoint": checkpoint,
+            "suite": suite,
+            "trials_per_task": trials_per_task,
+            "seed": seed,
+            "precision": "Official checkpoint default",
+            "metrics": metrics,
+            "timing": _timing_summary(
+                server_start_s=None,
+                server_ready_s=None,
+                eval_start_s=eval_start_s,
+                eval_end_s=eval_end_s,
+                run_start_s=run_start_s,
+                run_end_s=run_end_s,
+                episodes=metrics.get("episodes"),
+            ),
+            "max_gpu_memory_mb": max_memory_mb,
+            "max_gpu_memory_gb": _memory_gb(max_memory_mb),
+            "mean_peak_memory_gb_per_episode": _mean_episode_peak_gb(episode_memory.records),
+            "episode_memory": episode_memory.records,
+            "gpu_samples": gpu_samples,
+            "logs": {"eval": str(run_dir / "eval.log")},
+        },
+    )
+
+
 @app.local_entrypoint()
 def run_all(episodes_per_task: int = 20, trials_per_task: int = 50, suite: str = "all") -> None:
-    """Run pi0.5 and GR00T baselines. Use suite=all for all four suites."""
+    """Run pi0.5 and GR00T baselines. Use run_quant_matrix to include OpenVLA."""
     suites = list(LIBERO_SUITES) if suite == "all" else [suite]
     for suite_name in suites:
         print(json.dumps(run_pi05.remote(suite=suite_name, trials_per_task=trials_per_task), indent=2))
@@ -996,10 +1361,11 @@ def run_all(episodes_per_task: int = 20, trials_per_task: int = 50, suite: str =
 
 @app.local_entrypoint()
 def run_quant_matrix(
-    models: str = "gr00t,pi05",
+    models: str = "gr00t,pi05,openvla",
     presets: str = "fp16,w4a4,w4a8,a8",
     suites: str = "all",
     trials_per_task: int = 50,
+    openvla_trials_per_task: int = 1,
     episodes_per_task: int = 20,
     n_envs: int = 5,
     seed: int = 7,
@@ -1007,14 +1373,15 @@ def run_quant_matrix(
     quant_scope: str = "action_expert_mlp",
     task_limit: int = 0,
     output_dir: str = "",
+    resume: bool = True,
 ) -> None:
     """Run a reproducible LIBERO model/precision matrix and write a paper-style table."""
     model_names = [name.strip().lower() for name in models.split(",") if name.strip()]
     aliases = {"pi0.5": "pi05", "pi0_5": "pi05", "groot": "gr00t"}
     model_names = [aliases.get(name, name) for name in model_names]
-    unknown_models = [name for name in model_names if name not in {"gr00t", "pi05"}]
+    unknown_models = [name for name in model_names if name not in MODEL_LABELS]
     if not model_names or unknown_models:
-        raise ValueError(f"Models must be a comma-separated subset of gr00t,pi05; got {models!r}.")
+        raise ValueError(f"Models must be a comma-separated subset of {tuple(MODEL_LABELS)}; got {models!r}.")
 
     selected_presets = _parse_presets(presets)
     suite_names = list(LIBERO_SUITES) if suites.strip().lower() == "all" else [
@@ -1029,18 +1396,45 @@ def run_quant_matrix(
     setting = "w/o DiT attention" if quant_scope == "action_expert_mlp" else "Full quantization"
     destination = Path(output_dir) if output_dir else Path("reports") / f"libero_quant_matrix_{int(time.time())}"
     runs: list[dict[str, Any]] = []
+    checkpoint_path = destination / "runs.json"
+    if resume and checkpoint_path.exists():
+        payload = json.loads(checkpoint_path.read_text(encoding="utf-8"))
+        runs = list(payload.get("runs", []))
+        completed = sum(1 for run in runs if run.get("status") == "ok")
+        print(f"Resuming from {checkpoint_path}; found {completed} completed run(s).", flush=True)
     print(f"Writing matrix checkpoints to {destination.resolve()}", flush=True)
 
     for preset in selected_presets:
         for model_name in model_names:
             for suite_name in suite_names:
+                if model_name == "openvla" and preset.enabled:
+                    continue
+                existing_index = next(
+                    (
+                        idx
+                        for idx, run in enumerate(runs)
+                        if run.get("model_key") == model_name
+                        and run.get("preset") == preset.name
+                        and run.get("suite") == suite_name
+                    ),
+                    None,
+                )
+                if existing_index is not None and runs[existing_index].get("status") == "ok":
+                    print(
+                        f"Skipping completed {model_name} {preset.precision} on {suite_name}",
+                        flush=True,
+                    )
+                    continue
                 record: dict[str, Any] = {
                     "model_key": model_name,
                     "preset": preset.name,
                     "suite": suite_name,
                     "status": "running",
                 }
-                runs.append(record)
+                if existing_index is None:
+                    runs.append(record)
+                else:
+                    runs[existing_index] = record
                 _write_matrix_outputs(destination, runs, selected_presets, model_names, setting)
                 print(f"\nRunning {model_name} {preset.precision} on {suite_name}", flush=True)
                 kwargs = {
@@ -1054,7 +1448,13 @@ def run_quant_matrix(
                     "quant_label": preset.name,
                 }
                 try:
-                    if model_name == "pi05":
+                    if model_name == "openvla":
+                        result = run_openvla.remote(
+                            suite=suite_name,
+                            trials_per_task=openvla_trials_per_task,
+                            seed=seed,
+                        )
+                    elif model_name == "pi05":
                         result = run_pi05.remote(
                             **kwargs,
                             trials_per_task=trials_per_task,
