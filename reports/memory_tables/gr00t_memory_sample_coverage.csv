@@ -1,0 +1,41 @@
+task,fp16,a8,w4a8,w4a4
+libero_10 | KITCHEN SCENE3 turn on the stove and put the moka pot on it,10/15,14/15,13/15,13/15
+libero_10 | KITCHEN SCENE4 put the black bowl in the bottom drawer of the cabinet and close it,15/15,13/15,14/15,12/15
+libero_10 | KITCHEN SCENE6 put the yellow and white mug in the microwave and close it,15/15,14/15,15/15,13/15
+libero_10 | KITCHEN SCENE8 put both moka pots on the stove,14/15,15/15,13/15,4/15
+libero_10 | LIVING ROOM SCENE1 put both the alphabet soup and the cream cheese box in the basket,12/15,13/15,12/15,3/15
+libero_10 | LIVING ROOM SCENE2 put both the alphabet soup and the tomato sauce in the basket,13/15,15/15,15/16,9/15
+libero_10 | LIVING ROOM SCENE2 put both the cream cheese box and the butter in the basket,13/15,15/16,15/15,12/15
+libero_10 | LIVING ROOM SCENE5 put the white mug on the left plate and put the yellow and white mug on the right plate,12/15,14/15,15/15,14/15
+libero_10 | LIVING ROOM SCENE6 put the white mug on the plate and put the chocolate pudding to the right of the plate,14/15,13/15,14/15,13/15
+libero_10 | STUDY SCENE1 pick up the book and place it in the back compartment of the caddy,14/15,15/15,15/15,11/15
+libero_goal | open the middle drawer of the cabinet,10/15,7/15,14/15,11/15
+libero_goal | open the top drawer and put the bowl inside,15/15,13/15,13/15,12/15
+libero_goal | push the plate to the front of the stove,13/15,11/15,11/15,15/16
+libero_goal | put the bowl on the plate,8/15,8/15,10/15,8/15
+libero_goal | put the bowl on the stove,9/15,7/15,10/15,8/15
+libero_goal | put the bowl on top of the cabinet,11/15,10/15,9/15,9/15
+libero_goal | put the cream cheese in the bowl,11/15,12/15,9/15,12/15
+libero_goal | put the wine bottle on the rack,10/15,10/15,10/15,13/15
+libero_goal | put the wine bottle on top of the cabinet,11/15,9/17,10/15,12/15
+libero_goal | turn on the stove,11/15,9/15,8/15,10/15
+libero_object | pick up the alphabet soup and place it in the basket,12/15,12/15,9/15,13/15
+libero_object | pick up the bbq sauce and place it in the basket,14/15,12/15,13/15,10/15
+libero_object | pick up the butter and place it in the basket,11/15,14/16,13/15,13/15
+libero_object | pick up the chocolate pudding and place it in the basket,7/15,8/15,11/15,10/15
+libero_object | pick up the cream cheese and place it in the basket,14/15,11/15,10/15,11/15
+libero_object | pick up the ketchup and place it in the basket,8/15,8/15,6/15,10/15
+libero_object | pick up the milk and place it in the basket,8/15,7/15,6/15,15/15
+libero_object | pick up the orange juice and place it in the basket,14/15,13/15,13/15,10/15
+libero_object | pick up the salad dressing and place it in the basket,11/15,10/15,14/15,12/15
+libero_object | pick up the tomato sauce and place it in the basket,13/15,13/15,14/15,11/15
+libero_spatial | pick up the black bowl between the plate and the ramekin and place it on the plate,11/15,10/15,12/15,8/15
+libero_spatial | pick up the black bowl from table center and place it on the plate,9/15,8/15,12/15,8/15
+libero_spatial | pick up the black bowl in the top drawer of the wooden cabinet and place it on the plate,12/15,14/15,12/15,11/15
+libero_spatial | pick up the black bowl next to the cookie box and place it on the plate,9/15,10/15,10/15,13/16
+libero_spatial | pick up the black bowl next to the plate and place it on the plate,10/15,8/15,8/15,8/15
+libero_spatial | pick up the black bowl next to the ramekin and place it on the plate,8/15,10/15,7/15,7/15
+libero_spatial | pick up the black bowl on the cookie box and place it on the plate,5/16,7/15,7/15,5/15
+libero_spatial | pick up the black bowl on the ramekin and place it on the plate,14/15,12/15,13/15,10/16
+libero_spatial | pick up the black bowl on the stove and place it on the plate,13/15,10/15,8/15,11/15
+libero_spatial | pick up the black bowl on the wooden cabinet and place it on the plate,10/15,9/15,12/15,13/15

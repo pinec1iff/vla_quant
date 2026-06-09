@@ -1,0 +1,5 @@
+Method,Precision,Quantization Setting,GR00T N1.7 Quantized Layers,GR00T N1.7 Total Transformer Layers,GR00T N1.7 Layer Coverage Percent,GR00T N1.7 Goal,GR00T N1.7 Spatial,GR00T N1.7 Object,GR00T N1.7 Long,GR00T N1.7 Average,Pi 0.5 Quantized Layers,Pi 0.5 Total Transformer Layers,Pi 0.5 Layer Coverage Percent,Pi 0.5 Goal,Pi 0.5 Spatial,Pi 0.5 Object,Pi 0.5 Long,Pi 0.5 Average,OpenVLA 7B Default Quantized Layers,OpenVLA 7B Default Total Transformer Layers,OpenVLA 7B Default Layer Coverage Percent,OpenVLA 7B Default Goal,OpenVLA 7B Default Spatial,OpenVLA 7B Default Object,OpenVLA 7B Default Long,OpenVLA 7B Default Average
+Full Precision,FP16,No quantization,0,12,0.0,,,,,,0,18,0.0,98.5,98.5,99.0,94.5,97.625,,,,,,,,
+QuantVLA,W4A4,w/o DiT attention,12,12,100.0,,,,,,18,18,100.0,76.5,94.5,61.0,73.0,76.25,,,,,,,,
+QuantVLA,W4A8,w/o DiT attention,12,12,100.0,,,,,,18,18,100.0,98.0,98.0,97.5,90.0,95.875,,,,,,,,
+QuantVLA,A8,w/o DiT attention,12,12,100.0,,,,,,18,18,100.0,95.5,98.5,98.0,95.5,96.875,,,,,,,,

@@ -1,0 +1,5 @@
+model,model_label,preset,precision,quantization_setting,quantized_transformer_layers,total_transformer_layers,layer_coverage_percent
+gr00t,GR00T N1.7,fp16,FP16,No quantization,0,12,0.0
+gr00t,GR00T N1.7,w4a4,W4A4,w/o DiT attention,12,12,100.0
+gr00t,GR00T N1.7,w4a8,W4A8,w/o DiT attention,12,12,100.0
+gr00t,GR00T N1.7,a8,A8,w/o DiT attention,12,12,100.0

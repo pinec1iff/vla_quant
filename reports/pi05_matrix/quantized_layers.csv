@@ -1,0 +1,5 @@
+model,model_label,preset,precision,quantization_setting,quantized_transformer_layers,total_transformer_layers,layer_coverage_percent
+pi05,Pi 0.5,fp16,FP16,No quantization,0,18,0.0
+pi05,Pi 0.5,w4a4,W4A4,w/o DiT attention,18,18,100.0
+pi05,Pi 0.5,w4a8,W4A8,w/o DiT attention,18,18,100.0
+pi05,Pi 0.5,a8,A8,w/o DiT attention,18,18,100.0

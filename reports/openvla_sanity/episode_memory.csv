@@ -1,0 +1,41 @@
+model,preset,suite,run_name,episode,reported_episode,task,memory_used_gb_at_completion,peak_memory_gb_during_episode,gpu_sample_count
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,1,1,pick up the black bowl between the plate and the ramekin and place it on the plate,15.56,15.56,16
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,2,2,pick up the black bowl next to the ramekin and place it on the plate,15.56,15.56,16
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,3,3,pick up the black bowl from table center and place it on the plate,15.56,15.56,32
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,4,4,pick up the black bowl on the cookie box and place it on the plate,15.56,15.56,12
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,5,5,pick up the black bowl in the top drawer of the wooden cabinet and place it on the plate,15.56,15.56,18
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,6,6,pick up the black bowl on the ramekin and place it on the plate,15.56,15.56,31
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,7,7,pick up the black bowl next to the cookie box and place it on the plate,15.56,15.56,30
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,8,8,pick up the black bowl on the stove and place it on the plate,15.56,15.56,17
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,9,9,pick up the black bowl next to the plate and place it on the plate,15.56,15.56,17
+openvla,fp16,libero_spatial,openvla_libero_spatial_default_1780885405,10,10,pick up the black bowl on the wooden cabinet and place it on the plate,15.56,15.56,17
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,1,1,pick up the alphabet soup and place it in the basket,15.456,15.456,38
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,2,2,pick up the cream cheese and place it in the basket,15.476,15.476,19
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,3,3,pick up the salad dressing and place it in the basket,15.476,15.476,18
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,4,4,pick up the bbq sauce and place it in the basket,15.495,15.495,26
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,5,5,pick up the ketchup and place it in the basket,15.495,15.495,20
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,6,6,pick up the tomato sauce and place it in the basket,15.495,15.495,23
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,7,7,pick up the butter and place it in the basket,15.499,15.499,20
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,8,8,pick up the milk and place it in the basket,15.495,15.495,19
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,9,9,pick up the chocolate pudding and place it in the basket,15.495,15.495,38
+openvla,fp16,libero_object,openvla_libero_object_default_1780885927,10,10,pick up the orange juice and place it in the basket,15.495,15.495,38
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,1,1,open the middle drawer of the cabinet,15.44,15.44,42
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,2,2,put the bowl on the stove,15.44,15.44,13
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,3,3,put the wine bottle on top of the cabinet,15.44,15.44,14
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,4,4,open the top drawer and put the bowl inside,15.44,15.44,29
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,5,5,put the bowl on top of the cabinet,15.44,15.44,12
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,6,6,push the plate to the front of the stove,15.44,15.44,29
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,7,7,put the cream cheese in the bowl,15.44,15.44,40
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,8,8,turn on the stove,15.44,15.44,12
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,9,9,put the bowl on the plate,15.44,15.44,11
+openvla,fp16,libero_goal,openvla_libero_goal_default_1780886544,10,10,put the wine bottle on the rack,15.44,15.44,47
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,1,1,put both the alphabet soup and the tomato sauce in the basket,15.698,15.698,76
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,2,2,put both the cream cheese box and the butter in the basket,15.698,15.698,33
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,3,3,turn on the stove and put the moka pot on it,15.3,15.3,38
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,4,4,put the black bowl in the bottom drawer of the cabinet and close it,15.397,15.397,37
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,5,5,put the white mug on the left plate and put the yellow and white mug on the right plate,15.864,15.864,72
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,6,6,pick up the book and place it in the back compartment of the caddy,15.458,15.458,44
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,7,7,put the white mug on the plate and put the chocolate pudding to the right of the plate,15.722,15.722,72
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,8,8,put both the alphabet soup and the cream cheese box in the basket,15.63,15.63,47
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,9,9,put both moka pots on the stove,15.3,15.3,70
+openvla,fp16,libero_10,openvla_libero_10_default_1780887138,10,10,put the yellow and white mug in the microwave and close it,15.454,15.454,34
